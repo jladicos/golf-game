@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>CHEERS GOLF</title>
+	<style>
+		body {
+			font-family: 'Courier New', monospace;
+			background-color: #333;
+			color: #fff;
+			text-align: center;
+			margin: 0;
+			padding: 20px;
+			overflow: hidden;
+		}
+		#game-container {
+			width: 800px;
+			height: 500px;
+			margin: 0 auto;
+			background-color: #8cd790; /* Green for golf course */
+			position: relative;
+			border: 4px solid #553c26; /* Brown border */
+			box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+			overflow: hidden;
+		}
+		#sky {
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 150px;
+			background-color: #87ceeb;
+			z-index: 1;
+			transition: background-color 1s ease;
+		}
+		#hole {
+			position: absolute;
+			width: 30px;
+			height: 15px;
+			background-color: #000;
+			border-radius: 50%;
+			bottom: 193px;
+			right: 88px; /* Aligned with flagpole */
+			z-index: 2;
+		}
+		#flag {
+			position: absolute;
+			bottom: 245px;
+			right: 118px;
+			z-index: 3;
+		}
+		#flag:before {
+			content: "";
+			position: absolute;
+			width: 4px;
+			height: 50px;
+			background-color: #553c26;
+			left: 13px;
+		}
+		#flag:after {
+			content: "";
+			position: absolute;
+			width: 20px;
+			height: 15px;
+			background-color: #ff0000;
+			left: 17px;
+			top: 0;
+		}
+		#tee {
+			position: absolute;
+			width: 12px;
+			height: 8px;
+			background-color: #006400; /* Dark green */
+			bottom: 250px;
+			left: 105px;
+			z-index: 2;
+			border-radius: 6px 6px 0 0; /* Rounded top */
+			clip-path: polygon(20% 100%, 80% 100%, 60% 0%, 40% 0%); /* More subtle tee shape */
+		}
+		#ball {
+			position: absolute;
+			width: 10px;
+			height: 10px;
+			background-color: #fff;
+			border-radius: 50%;
+			bottom: 255px;
+			left: 105px;
+			z-index: 3;
+			transition: all 1s ease-out;
+		}
+		#game-info {
+			background-color: #111;
+			padding: 10px;
+			margin-top: 20px;
+			border: 4px solid #553c26;
+			box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+		}
+		#fireworks {
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			z-index: 10;
+			pointer-events: none;
+			display: none;
+		}
+		.firework {
+			position: absolute;
+			width: 5px;
+			height: 5px;
+			border-radius: 50%;
+			animation: explode 1s forwards;
+			box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.5);
+		}
+		@keyframes explode {
+			0% {
+				transform: scale(1);
+				opacity: 1;
+			}
+			100% {
+				transform: scale(20);
+				opacity: 0;
+			}
+		}
+		.pixel-btn {
+			background-color: #ff6b6b;
+			color: white;
+			border: none;
+			padding: 10px 20px;
+			font-family: 'Courier New', monospace;
+			font-size: 16px;
+			cursor: pointer;
+			box-shadow: 0 4px 0 #c83737;
+			transition: all 0.1s;
+			margin: 10px;
+		}
+		.pixel-btn:active {
+			box-shadow: 0 1px 0 #c83737;
+			transform: translateY(3px);
+		}
+		input {
+			padding: 10px;
+			font-family: 'Courier New', monospace;
+			font-size: 16px;
+			width: 50px;
+			text-align: center;
+			margin-right: 10px;
+		}
+		#score-display {
+			font-size: 24px;
+			margin-bottom: 10px;
+		}
+		#clouds {
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 150px;
+			z-index: 1;
+		}
+		.cloud {
+			position: absolute;
+			background-color: white;
+			border-radius: 10px;
+			opacity: 0.8;
+			animation: float 30s linear infinite;
+		}
+		.rain {
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 200px;
+			z-index: 1;
+			display: none;
+		}
+		.raindrop {
+			position: absolute;
+			width: 2px;
+			height: 10px;
+			background-color: rgba(174, 194, 224, 0.8);
+			animation: rain 1s linear infinite;
+		}
+		@keyframes float {
+			0% { left: -100px; }
+			100% { left: 100%; }
+		}
+		@keyframes rain {
+			0% { transform: translateY(0); }
+			100% { transform: translateY(200px); }
+		}
+		#sun {
+			position: absolute;
+			width: 60px;
+			height: 60px;
+			background-color: #FFD700;
+			border-radius: 50%;
+			top: 30px;
+			right: 80px;
+			z-index: 1;
+			box-shadow: 0 0 20px 5px rgba(255, 215, 0, 0.7);
+			display: none;
+		}
+	</style>
+</head>
+<body>
+	<h1>CHEERS GOLF</h1>
+	
+	<!-- Audio elements with short sound effects -->
+	<audio id="hit-sound" src="https://assets.mixkit.co/active_storage/sfx/212/212-preview.mp3" preload="auto"></audio>
+	<audio id="success-sound" src="https://assets.mixkit.co/active_storage/sfx/1689/1689-preview.mp3" preload="auto"></audio>
+	<audio id="fail-sound" src="gameover.wav" preload="auto"></audio>
+	
+	<div id="game-container">
+		<div id="sky"></div>
+		<div id="clouds"></div>
+		<div id="rain" class="rain"></div>
+		<div id="sun"></div>
+		<div id="hole"></div>
+		<div id="flag"></div>
+		<div id="tee"></div>
+		<div id="ball"></div>
+		<div id="fireworks"></div>
+	</div>
+	
+	<div id="game-info">
+		<div id="score-display">PAR: <span id="par">-</span></div>
+		<div id="shot-controls">
+			<label for="user-guess">Your Shot:</label>
+			<input type="number" id="user-guess" min="1" max="10">
+			<button id="shoot-btn" class="pixel-btn">SHOOT!</button>
+		</div>
+		<div id="result-message"></div>
+		<button id="next-round-btn" class="pixel-btn" style="display: none;">NEXT HOLE</button>
+	</div>
+	
+	<script>
+		// Game elements
+		const parDisplay = document.getElementById('par');
+		const userGuess = document.getElementById('user-guess');
+		const shootBtn = document.getElementById('shoot-btn');
+		const nextRoundBtn = document.getElementById('next-round-btn');
+		const resultMessage = document.getElementById('result-message');
+		const ball = document.getElementById('ball');
+		const fireworks = document.getElementById('fireworks');
+		const hole = document.getElementById('hole');
+		const clouds = document.getElementById('clouds');
+		const sky = document.getElementById('sky');
+		const rain = document.getElementById('rain');
+		const sun = document.getElementById('sun');
+		const shotControls = document.getElementById('shot-controls');
+		const hitSound = document.getElementById('hit-sound');
+		const successSound = document.getElementById('success-sound');
+		const failSound = document.getElementById('fail-sound');
+		
+		// Game state
+		let currentPar = 0;
+		let round = 1;
+		let soundsUnlocked = false;
+		
+		// Function to play sounds safely across different browsers
+		function playSound(audio) {
+			try {
+				// Reset the audio to the beginning
+				audio.currentTime = 0;
+				
+				// Play the sound
+				const promise = audio.play();
+				
+				if (promise !== undefined) {
+					promise.then(() => {
+						console.log('Sound played successfully');
+					}).catch(error => {
+						console.error('Error playing sound:', error.message);
+						
+						// If autoplay is not allowed, try to unlock audio on the next user interaction
+						if (!soundsUnlocked) {
+							document.addEventListener('click', function unlockAudio() {
+								audio.play().catch(e => console.log('Sound still blocked:', e));
+								soundsUnlocked = true;
+								document.removeEventListener('click', unlockAudio);
+							}, { once: true });
+						}
+					});
+				}
+			} catch (e) {
+				console.error('Exception playing sound:', e);
+			}
+		}
+		
+		// Initialize the game
+		function initGame() {
+			console.log('Game initializing...');
+			
+			// Unlock audio on first user interaction (needed for many browsers)
+			document.addEventListener('click', function unlockAudio() {
+				console.log('Attempting to unlock audio...');
+				
+				// Create and play a silent sound to unlock audio
+				const silentSound = new Audio("data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAASW5mbwAAAA8AAAABAAABIADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OT7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/vAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV");
+				silentSound.play().then(() => {
+					console.log('Audio unlocked successfully');
+					soundsUnlocked = true;
+					
+					// Try playing both sounds at very low volume to fully unlock them
+					hitSound.volume = 0.01;
+					successSound.volume = 0.01;
+					hitSound.play().catch(e => console.log('Still needs interaction for hit sound'));
+					successSound.play().catch(e => console.log('Still needs interaction for success sound'));
+					
+					// Reset volumes
+					setTimeout(() => {
+						hitSound.volume = 1.0;
+						successSound.volume = 1.0;
+					}, 100);
+					
+				}).catch(e => {
+					console.log('Could not unlock audio yet:', e);
+				});
+				
+				document.removeEventListener('click', unlockAudio);
+			}, { once: true });
+			
+			// Create initial weather
+			setRandomWeather();
+			
+			// Start first round
+			startNewRound();
+		}
+		
+		// Set random weather for the hole
+		function setRandomWeather() {
+			// Clear previous weather
+			clouds.innerHTML = '';
+			rain.innerHTML = '';
+			rain.style.display = 'none';
+			sun.style.display = 'none';
+			
+			// Choose a random weather type
+			const weatherType = Math.floor(Math.random() * 3);
+			
+			switch (weatherType) {
+				case 0: // Sunny
+					sky.style.backgroundColor = '#87CEEB'; // Bright blue
+					sun.style.display = 'block';
+					break;
+					
+				case 1: // Cloudy
+					sky.style.backgroundColor = '#B0C4DE'; // Light steel blue
+					// Create clouds
+					for (let i = 0; i < 5; i++) {
+						createCloud();
+					}
+					break;
+					
+				case 2: // Rainy
+					sky.style.backgroundColor = '#708090'; // Slate gray
+					rain.style.display = 'block';
+					// Create rain
+					for (let i = 0; i < 100; i++) {
+						createRaindrop();
+					}
+					// Create some clouds too
+					for (let i = 0; i < 3; i++) {
+						createCloud();
+					}
+					break;
+			}
+		}
+		
+		// Create an 8-bit style cloud
+		function createCloud() {
+			const cloud = document.createElement('div');
+			cloud.className = 'cloud';
+			cloud.style.width = (50 + Math.random() * 100) + 'px';
+			cloud.style.height = (20 + Math.random() * 30) + 'px';
+			cloud.style.top = (Math.random() * 70) + 'px';
+			cloud.style.animationDuration = (30 + Math.random() * 20) + 's';
+			cloud.style.animationDelay = (Math.random() * -30) + 's';
+			clouds.appendChild(cloud);
+		}
+		
+		// Create a raindrop
+		function createRaindrop() {
+			const raindrop = document.createElement('div');
+			raindrop.className = 'raindrop';
+			raindrop.style.left = (Math.random() * 100) + '%';
+			raindrop.style.top = (Math.random() * 20) + '%';
+			raindrop.style.animationDuration = (0.5 + Math.random() * 0.5) + 's';
+			raindrop.style.animationDelay = (Math.random() * -1) + 's';
+			rain.appendChild(raindrop);
+		}
+		
+		// Start a new round
+		function startNewRound() {
+			// Set new weather
+			setRandomWeather();
+		
+			// Reset visuals
+			resetBall();
+			hideFireworks();
+			
+			// Reset sounds
+			if (hitSound) {
+				hitSound.pause();
+				hitSound.currentTime = 0;
+			}
+			if (successSound) {
+				successSound.pause();
+				successSound.currentTime = 0;
+			}
+		
+			// Weighted random par value
+			const parOptions = [1, 2, 3, 4];
+			const weights = [0.25, 0.30, 0.30, 0.15];
+		
+			function weightedRandom(options, weights) {
+				let sum = 0;
+				const rand = Math.random();
+				for (let i = 0; i < options.length; i++) {
+					sum += weights[i];
+					if (rand < sum) return options[i];
+				}
+				return options[options.length - 1]; // fallback
+			}
+		
+			currentPar = weightedRandom(parOptions, weights);
+			parDisplay.textContent = currentPar;
+		
+			// Clear previous results
+			resultMessage.textContent = '';
+			userGuess.value = '';
+		
+			// Show shot controls, hide next round button
+			shotControls.style.display = 'block';
+			nextRoundBtn.style.display = 'none';
+		
+			// Focus on input field
+			userGuess.focus();
+		}
+		
+		// Reset ball to starting position
+		function resetBall() {
+			ball.style.transition = 'none';
+			ball.style.left = '106px';
+			ball.style.bottom = '258px';
+			ball.style.display = 'block'; // Make sure ball is visible
+			// Force reflow to make the transition removal take effect
+			ball.offsetHeight;
+			ball.style.transition = 'all 1s ease-out';
+		}
+		
+		// Process the user's shot
+		function processShot() {
+			const guess = parseInt(userGuess.value);
+			
+			if (isNaN(guess) || guess < 1) {
+				resultMessage.textContent = 'Please enter a valid number!';
+				return;
+			}
+			
+			// Hide shot controls
+			shotControls.style.display = 'none';
+			
+			// Play the hit sound with a slight delay to make it more noticeable
+			setTimeout(() => {
+				playSound(hitSound);
+				console.log('Attempting to play hit sound');
+			}, 100);
+			
+			// Calculate where the ball should land
+			if (guess < currentPar) {
+				// Short of the hole
+				const distancePercent = guess / currentPar * 0.7;
+				const newPosition = 105 + (560 - 105) * distancePercent;
+				ball.style.left = newPosition + 'px';
+				setTimeout(() => {
+					playSound(failSound);
+					resultMessage.textContent = 'Shot landed short of the hole!';
+					nextRoundBtn.style.display = 'inline-block';
+				}, 1000);
+			} else if (guess > currentPar) {
+				// Past the hole
+				const extraDistance = (guess - currentPar) * 0.2;
+				const newPosition = 700 + extraDistance * 30;
+				ball.style.left = Math.min(newPosition, 780) + 'px';
+				setTimeout(() => {
+					playSound(failSound);
+					resultMessage.textContent = 'Shot went past the hole!';
+					nextRoundBtn.style.display = 'inline-block';
+				}, 1000);
+			} else {
+				// Perfect shot!
+				ball.style.left = hole.offsetLeft + 10 + 'px';
+				ball.style.bottom = '198px';
+				setTimeout(() => {
+					// Make the ball disappear
+					ball.style.display = 'none';
+					
+					// Play success sound when the ball goes in the hole
+					setTimeout(() => {
+						playSound(successSound);
+						console.log('Attempting to play success sound');
+					}, 50);
+					
+					resultMessage.textContent = 'HOLE IN ONE! YOU WIN A 🌮!';
+					createFireworks();
+					nextRoundBtn.style.display = 'inline-block';
+				}, 1000);
+			}
+		}
+		
+		// Create fireworks effect
+		function createFireworks() {
+			fireworks.style.display = 'block';
+			// Increase number of fireworks from 20 to 50
+			for (let i = 0; i < 50; i++) {
+				setTimeout(() => {
+					const firework = document.createElement('div');
+					firework.className = 'firework';
+					firework.style.left = (Math.random() * 800) + 'px';
+					firework.style.top = (Math.random() * 400) + 'px';
+					firework.style.backgroundColor = getRandomColor();
+					fireworks.appendChild(firework);
+					
+					// Remove the firework element after animation completes
+					setTimeout(() => {
+						firework.remove();
+					}, 1000);
+				}, i * 50); // Faster frequency (50ms instead of 100ms)
+			}
+			
+			// Add a second wave of fireworks after a short delay
+			setTimeout(() => {
+				for (let i = 0; i < 30; i++) {
+					setTimeout(() => {
+						const firework = document.createElement('div');
+						firework.className = 'firework';
+						firework.style.left = (Math.random() * 800) + 'px';
+						firework.style.top = (Math.random() * 400) + 'px';
+						firework.style.backgroundColor = getRandomColor();
+						fireworks.appendChild(firework);
+						
+						setTimeout(() => {
+							firework.remove();
+						}, 1000);
+					}, i * 50);
+				}
+			}, 1500);
+		}
+		
+		// Hide fireworks
+		function hideFireworks() {
+			fireworks.style.display = 'none';
+			fireworks.innerHTML = '';
+		}
+		
+		// Get a random color for fireworks
+		function getRandomColor() {
+			const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+			return colors[Math.floor(Math.random() * colors.length)];
+		}
+		
+		// Event listeners
+		shootBtn.addEventListener('click', processShot);
+		nextRoundBtn.addEventListener('click', startNewRound);
+		userGuess.addEventListener('keypress', function(e) {
+			if (e.key === 'Enter') {
+				processShot();
+			}
+		});
+		
+		// Initialize the game
+		initGame();
+	</script>
+</body>
+</html>
